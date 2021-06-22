@@ -1,5 +1,9 @@
 buildscript {
     repositories {
+        mavenLocal()
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        maven{ url 'http://maven.aliyun.com/nexus/content/repositories/jcenter'}
+
         mavenCentral()
         maven {
           url "https://plugins.gradle.org/m2/"
@@ -18,6 +22,8 @@ apply plugin: "io.eventuate.plugins.gradle.publish.EventuatePublish"
 
 allprojects {
     group = "io.eventuate.messaging.kafka"
+    version = '0.14.0-lxm-RELEASE' // 指定版本
+    apply plugin: 'maven' // 引入maven插件
 }
 
 subprojects {
@@ -25,10 +31,28 @@ subprojects {
     targetCompatibility = 1.8
 
     repositories {
+        mavenLocal()
         mavenCentral()
         jcenter()
         maven { url "https://repo.spring.io/milestone" }
         eventuateMavenRepoUrl.split(',').each { repoUrl -> maven { url repoUrl } }
+    }
+    apply plugin: 'maven-publish'
+    // 指定上传的路径
+    def localMavenRepo = 'file://' + new File('D:\\apache-maven-3.5.2\\local\\repo').absolutePath
+// 上传Task，Gradle会生成并上传pom.xml文件。
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                repository(url: localMavenRepo)
+                //构造项目的Pom文件
+                pom.project {
+                    name = 'eventuate-messaging-kafka'
+                    packaging = 'jar'
+                    description = 'lixiaoming for debug'
+                }
+            }
+        }
     }
 
     dependencies {
