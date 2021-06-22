@@ -8,10 +8,12 @@ dependencyManagement {
 dependencies {
     compile "io.zipkin.brave:brave:5.6.1"
     compile "io.eventuate.tram.core:eventuate-tram-messaging:0.29.0.RELEASE"
+    compile "io.eventuate.common:eventuate-common-json-mapper:0.14.0.RELEASE"
 
     testCompile 'org.springframework.cloud:spring-cloud-starter-sleuth:2.1.1.RELEASE'
     testCompile 'org.springframework.cloud:spring-cloud-sleuth-zipkin:2.1.1.RELEASE'
     compile project (':eventuate-messaging-kafka-common')
+    //compile project (':eventuate-messaging-kafka-consumer')
 }
 
 test {

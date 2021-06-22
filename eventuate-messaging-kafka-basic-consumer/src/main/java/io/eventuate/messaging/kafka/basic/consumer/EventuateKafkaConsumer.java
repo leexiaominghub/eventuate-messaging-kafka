@@ -1,6 +1,10 @@
 package io.eventuate.messaging.kafka.basic.consumer;
 
+import io.eventuate.common.json.mapper.JSonMapper;
+import io.eventuate.messaging.kafka.common.EventuateBinaryMessageEncoding;
+import io.eventuate.tram.messaging.common.MessageImpl;
 import io.eventuate.tram.messaging.common.MessageInterceptor;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -51,6 +55,7 @@ public class EventuateKafkaConsumer {
     this.backPressureConfig = eventuateKafkaConsumerConfigurationProperties.getBackPressure();
     this.pollTimeout = eventuateKafkaConsumerConfigurationProperties.getPollTimeout();
   }
+
   public EventuateKafkaConsumer(String subscriberId,
                                 EventuateKafkaConsumerMessageHandler handler,
                                 List<String> topics,
@@ -174,12 +179,22 @@ public class EventuateKafkaConsumer {
         processor.throwFailureException();
       else
         for (ConsumerRecord<String, byte[]> record : records) {
+          RawKafkaMessage rawKafkaMessage = new RawKafkaMessage(record.value());
+          KafkaMessage kafkaMessage = new KafkaMessage(EventuateBinaryMessageEncoding.bytesToString(rawKafkaMessage.getPayload()));
+          MessageImpl message = JSonMapper.fromJson(kafkaMessage.getPayload(), MessageImpl.class);
+          Arrays.stream(messageInterceptors).forEach(mi -> mi.preReceive(message));
+          ConsumerRecord<String, byte[]> mRecord = new ConsumerRecord(record.topic(), record.partition(), record.offset(), record.key(),
+                  EventuateBinaryMessageEncoding.stringToBytes(JSonMapper.toJson(message)));
+
+
           logger.debug("lxm {}", (Object) messageInterceptors);
           logger.debug("lxm processing record {} {}", subscriberId, record.offset());
           //logger.debug("processing record {} {} {}", subscriberId, record.offset(), record.value());
           if (logger.isDebugEnabled())
             logger.debug(String.format("EventuateKafkaAggregateSubscriptions subscriber = %s, offset = %d, key = %s, value = %s", subscriberId, record.offset(), record.key(), record.value()));
-          processor.process(record);
+          processor.process(mRecord);
+          Arrays.stream(messageInterceptors).forEach(mi -> mi.postReceive(null));
+          //processor.process(record);
         }
       if (!records.isEmpty())
         logger.debug("Processed {} {} records", subscriberId, records.count());
