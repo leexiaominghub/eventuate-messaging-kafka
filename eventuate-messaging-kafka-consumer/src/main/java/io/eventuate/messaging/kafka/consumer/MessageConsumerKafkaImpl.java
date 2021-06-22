@@ -8,6 +8,7 @@ import io.eventuate.messaging.kafka.common.EventuateBinaryMessageEncoding;
 import io.eventuate.messaging.kafka.common.EventuateKafkaMultiMessageConverter;
 import io.eventuate.messaging.kafka.common.EventuateKafkaMultiMessage;
 import io.eventuate.messaging.partitionmanagement.CommonMessageConsumer;
+import io.eventuate.tram.messaging.common.MessageInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,12 +28,25 @@ public class MessageConsumerKafkaImpl implements CommonMessageConsumer {
   private KafkaConsumerFactory kafkaConsumerFactory;
   private EventuateKafkaMultiMessageConverter eventuateKafkaMultiMessageConverter = new EventuateKafkaMultiMessageConverter();
 
+  private MessageInterceptor[] messageInterceptors = null;
+
   public MessageConsumerKafkaImpl(String bootstrapServers,
                                   EventuateKafkaConsumerConfigurationProperties eventuateKafkaConsumerConfigurationProperties,
                                   KafkaConsumerFactory kafkaConsumerFactory) {
     this.bootstrapServers = bootstrapServers;
     this.eventuateKafkaConsumerConfigurationProperties = eventuateKafkaConsumerConfigurationProperties;
     this.kafkaConsumerFactory = kafkaConsumerFactory;
+  }
+
+  public MessageConsumerKafkaImpl(String bootstrapServers,
+                                  EventuateKafkaConsumerConfigurationProperties eventuateKafkaConsumerConfigurationProperties,
+                                  KafkaConsumerFactory kafkaConsumerFactory,
+                                  MessageInterceptor[] messageInterceptors) {
+    this.bootstrapServers = bootstrapServers;
+    this.eventuateKafkaConsumerConfigurationProperties = eventuateKafkaConsumerConfigurationProperties;
+    this.kafkaConsumerFactory = kafkaConsumerFactory;
+    this.messageInterceptors = messageInterceptors;
+    logger.info("MessageConsumerKafkaImpl");
   }
 
   public KafkaSubscription subscribe(String subscriberId, Set<String> channels, KafkaMessageHandler handler) {
@@ -48,7 +62,8 @@ public class MessageConsumerKafkaImpl implements CommonMessageConsumer {
             new ArrayList<>(channels),
             bootstrapServers,
             eventuateKafkaConsumerConfigurationProperties,
-            kafkaConsumerFactory);
+            kafkaConsumerFactory,
+            messageInterceptors);
 
     consumers.add(kc);
 

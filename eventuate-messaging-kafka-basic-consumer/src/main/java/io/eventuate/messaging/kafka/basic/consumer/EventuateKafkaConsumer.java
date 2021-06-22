@@ -1,5 +1,6 @@
 package io.eventuate.messaging.kafka.basic.consumer;
 
+import io.eventuate.tram.messaging.common.MessageInterceptor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -30,6 +31,7 @@ public class EventuateKafkaConsumer {
   private volatile EventuateKafkaConsumerState state = EventuateKafkaConsumerState.CREATED;
 
   private volatile boolean closeConsumerOnStop = true;
+  private MessageInterceptor[] messageInterceptors = null;
 
   private Optional<ConsumerCallbacks> consumerCallbacks = Optional.empty();
 
@@ -48,6 +50,25 @@ public class EventuateKafkaConsumer {
     this.consumerProperties.putAll(eventuateKafkaConsumerConfigurationProperties.getProperties());
     this.backPressureConfig = eventuateKafkaConsumerConfigurationProperties.getBackPressure();
     this.pollTimeout = eventuateKafkaConsumerConfigurationProperties.getPollTimeout();
+  }
+  public EventuateKafkaConsumer(String subscriberId,
+                                EventuateKafkaConsumerMessageHandler handler,
+                                List<String> topics,
+                                String bootstrapServers,
+                                EventuateKafkaConsumerConfigurationProperties eventuateKafkaConsumerConfigurationProperties,
+                                KafkaConsumerFactory kafkaConsumerFactory,
+                                MessageInterceptor[] messageInterceptors) {
+    this.subscriberId = subscriberId;
+    this.handler = handler;
+    this.topics = topics;
+    this.kafkaConsumerFactory = kafkaConsumerFactory;
+
+    this.consumerProperties = ConsumerPropertiesFactory.makeDefaultConsumerProperties(bootstrapServers, subscriberId);
+    this.consumerProperties.putAll(eventuateKafkaConsumerConfigurationProperties.getProperties());
+    this.backPressureConfig = eventuateKafkaConsumerConfigurationProperties.getBackPressure();
+    this.pollTimeout = eventuateKafkaConsumerConfigurationProperties.getPollTimeout();
+    this.messageInterceptors = messageInterceptors;
+    logger.info("lxm here come");
   }
 
   public void setConsumerCallbacks(Optional<ConsumerCallbacks> consumerCallbacks) {
@@ -153,7 +174,9 @@ public class EventuateKafkaConsumer {
         processor.throwFailureException();
       else
         for (ConsumerRecord<String, byte[]> record : records) {
-          logger.debug("processing record {} {} {}", subscriberId, record.offset(), record.value());
+          logger.debug("lxm {}", (Object) messageInterceptors);
+          logger.debug("lxm processing record {} {}", subscriberId, record.offset());
+          //logger.debug("processing record {} {} {}", subscriberId, record.offset(), record.value());
           if (logger.isDebugEnabled())
             logger.debug(String.format("EventuateKafkaAggregateSubscriptions subscriber = %s, offset = %d, key = %s, value = %s", subscriberId, record.offset(), record.key(), record.value()));
           processor.process(record);

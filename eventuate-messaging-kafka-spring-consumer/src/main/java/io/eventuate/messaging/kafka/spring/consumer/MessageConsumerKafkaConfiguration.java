@@ -1,5 +1,6 @@
 package io.eventuate.messaging.kafka.spring.consumer;
 
+import io.eventuate.tram.messaging.common.MessageInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -16,7 +17,9 @@ public class MessageConsumerKafkaConfiguration {
   @Bean
   public MessageConsumerKafkaImpl messageConsumerKafka(EventuateKafkaConfigurationProperties props,
                                                        EventuateKafkaConsumerConfigurationProperties eventuateKafkaConsumerConfigurationProperties,
-                                                       KafkaConsumerFactory kafkaConsumerFactory) {
-    return new MessageConsumerKafkaImpl(props.getBootstrapServers(), eventuateKafkaConsumerConfigurationProperties, kafkaConsumerFactory);
+                                                       KafkaConsumerFactory kafkaConsumerFactory, MessageInterceptor[] messageInterceptors) {
+    System.out.println("messageConsumerKafka");
+    return new MessageConsumerKafkaImpl(props.getBootstrapServers(), eventuateKafkaConsumerConfigurationProperties, kafkaConsumerFactory, messageInterceptors);
+    //return new MessageConsumerKafkaImpl(props.getBootstrapServers(), eventuateKafkaConsumerConfigurationProperties, kafkaConsumerFactory);
   }
 }
